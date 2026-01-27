@@ -157,7 +157,7 @@ namespace field_parser {
         field_info_t result = {};
         result.m_name = name;
 
-        std::copy(array_sizes.begin(), array_sizes.end(), std::back_inserter(result.m_array_sizes));
+        std::ranges::copy(array_sizes.begin(), array_sizes.end(), std::back_inserter(result.m_array_sizes));
 
         detail::parse_bitfield(generator, result, type_name);
         detail::parse_type(generator, result, type_name);

@@ -185,7 +185,7 @@ namespace {
             /// Explicitly convert to std::string with the size as the string may not end with a nullterm
             /// But if this string does contain a null terminator, we should properly handle this too
             const auto& szValue = metadata_entry.m_pNetworkValue->m_szValue;
-            const auto null_pos = std::find(szValue.begin(), szValue.end(), 0x00);
+            const auto null_pos = std::ranges::find(szValue.begin(), szValue.end(), 0x00);
             const auto size = null_pos != szValue.end() ? std::distance(szValue.begin(), null_pos) : szValue.size();
 
             value = std::string(metadata_entry.m_pNetworkValue->m_szValue.data(), size);
