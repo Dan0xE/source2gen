@@ -132,8 +132,13 @@ enum {
 #elif defined(DOTA2) || defined(CS2) || defined(DEADLOCK)
 
 constexpr auto kSchemaSystemVersion = platform_specific{.windows = 2, .linux = 1}.get();
+    #if defined(CS2)
+constexpr auto kSchemaSystem_PAD0 = 0x190;
+constexpr auto kSchemaSystem_PAD1 = 0xE0;
+    #else
 constexpr auto kSchemaSystem_PAD0 = platform_specific{.windows = 0x188, .linux = 0x188 + 0x68}.get();
 constexpr auto kSchemaSystem_PAD1 = 0x120;
+    #endif
 constexpr auto kSchemaSystemTypeScope_PAD0 = 0x7;
 
 enum {
@@ -650,6 +655,10 @@ public:
     const char* m_pszName; // 0x0008
     const char* m_pszModule; // 0x0010
 
+#if defined(CS2)
+    std::array<std::byte, 8> pad_0x18;
+#endif
+
     int m_nSizeOf; // 0x0018
 
     std::int16_t m_nFieldSize; // 0x001C
@@ -683,7 +692,11 @@ public:
     }
 };
 
+#if defined(CS2)
+static_assert(offsetof(SchemaClassInfoData_t, m_pFn) == 0x68);
+#else
 static_assert(offsetof(SchemaClassInfoData_t, m_pFn) == 0x60, "Offset of m_pFn should be 0x60");
+#endif
 
 class CSchemaClassInfo : public SchemaClassInfoData_t {
 public:
@@ -964,6 +977,10 @@ private:
 
 #if !defined(DOTA2) && !defined(CS2) && !defined(DEADLOCK)
     CSchemaType_NoschemaType m_pNoschemaType = {};
+#endif
+
+#if defined(CS2)
+    std::array<char, 0x60> pad_0x500 = {};
 #endif
 
     CUtlTSHash<CSchemaClassBinding*> m_ClassBindings = {}; // 0x05C0

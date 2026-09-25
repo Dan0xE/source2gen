@@ -247,6 +247,15 @@ public:
     DatamapFlags m_nFlags;
     // the name of the variable in the map/fgd data, or the name of the action
     const char* m_pszExternalName;
+#if defined(CS2)
+    union {
+        ISaveRestoreOps* m_pSaveRestoreOps;
+        void* m_pInputFn;
+        datamap_t* m_pDataMap;
+        const char* m_pszEnumName;
+    };
+    int m_iFieldSizeInBytes;
+#else
     // pointer to the function set for save/restoring of custom data types
     ISaveRestoreOps* m_pSaveRestoreOps;
     // for associating function with string names
@@ -272,13 +281,19 @@ public:
 
     IPredictionCopyOps* pPredictionCopyOps;
     datamap_t* m_pPredictionCopyDataMap;
+#endif
 
     ~typedescription_t();
 };
 
 static_assert(offsetof(typedescription_t, m_pszFieldName) == 0x08);
-static_assert(offsetof(typedescription_t, m_pDataMap)== platform_specific{.windows = 0x38, .linux = 0x40});
-static_assert(sizeof(typedescription_t)== platform_specific{.windows = 0x68, .linux = 0x70});
+#if defined(CS2)
+static_assert(offsetof(typedescription_t, m_pDataMap) == 0x28);
+static_assert(sizeof(typedescription_t) == 0x38);
+#else
+static_assert(offsetof(typedescription_t, m_pDataMap) == platform_specific{.windows = 0x38, .linux = 0x40});
+static_assert(sizeof(typedescription_t) == platform_specific{.windows = 0x68, .linux = 0x70});
+#endif
 
 // source2gen - Source2 games SDK generator
 // Copyright 2024 neverlosecc

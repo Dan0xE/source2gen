@@ -94,13 +94,21 @@ public:
 
     MemAllocAttribute_t m_AllocAttribute{};
 
+#if defined(CS2)
+    alignas(8) std::byte m_Mutex[0x10]{};
+#else
     CThreadMutex m_Mutex{};
+#endif
 
     CBlob* m_pBlobHead{};
 
     int m_TotalSize{}; // m_BlocksPerBlob * (m_NumBlobs + 1) + (m_nAligment + 14)
 };
+#if defined(CS2)
+static_assert(sizeof(CUtlMemoryPoolBaseV2) == 0x60);
+#else
 static_assert(sizeof(CUtlMemoryPoolBaseV2) == platform_specific{.windows = 0x80, .linux = 0x90});
+#endif
 
 using CUtlMemoryPoolBase = std::conditional_t<kUtlMemoryPoolBaseVersion == 1, CUtlMemoryPoolBaseV1, CUtlMemoryPoolBaseV2>;
 
