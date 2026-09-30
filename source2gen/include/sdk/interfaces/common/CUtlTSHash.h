@@ -341,6 +341,12 @@ std::vector<T> CUtlTSHashV2<T, Keytype, BucketCount, HashFuncs>::GetElements(int
 template <class Ty>
 using CUtlTSHash = std::conditional_t<kUtlTsHashVersion == 1, CUtlTSHashV1<Ty>, CUtlTSHashV2<Ty>>;
 
+#if defined(DEADLOCK)
+// schemasystem.dll walks the buckets at +0x60 with a 0x18 stride; the two hashes in a type scope are 0x1870 apart.
+static_assert(offsetof(CUtlTSHash<void*>, m_aBuckets) == 0x60);
+static_assert(sizeof(CUtlTSHash<void*>) == 0x1870);
+#endif
+
 // source2gen - Source2 games SDK generator
 // Copyright 2024 neverlosecc
 //

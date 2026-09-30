@@ -247,7 +247,7 @@ public:
     DatamapFlags m_nFlags;
     // the name of the variable in the map/fgd data, or the name of the action
     const char* m_pszExternalName;
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
     union {
         ISaveRestoreOps* m_pSaveRestoreOps;
         void* m_pInputFn;
@@ -287,8 +287,11 @@ public:
 };
 
 static_assert(offsetof(typedescription_t, m_pszFieldName) == 0x08);
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
+static_assert(offsetof(typedescription_t, m_nFlags) == 0x18);
+static_assert(offsetof(typedescription_t, m_pszExternalName) == 0x20);
 static_assert(offsetof(typedescription_t, m_pDataMap) == 0x28);
+static_assert(offsetof(typedescription_t, m_iFieldSizeInBytes) == 0x30);
 static_assert(sizeof(typedescription_t) == 0x38);
 #else
 static_assert(offsetof(typedescription_t, m_pDataMap) == platform_specific{.windows = 0x38, .linux = 0x40});

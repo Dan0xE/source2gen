@@ -132,7 +132,7 @@ enum {
 #elif defined(DOTA2) || defined(CS2) || defined(DEADLOCK)
 
 constexpr auto kSchemaSystemVersion = platform_specific{.windows = 2, .linux = 1}.get();
-    #if defined(CS2)
+    #if defined(CS2) || defined(DEADLOCK)
 constexpr auto kSchemaSystem_PAD0 = 0x190;
 constexpr auto kSchemaSystem_PAD1 = 0xE0;
     #else
@@ -148,7 +148,11 @@ enum {
     kSchemaSystem_GetClassModuleName = kSchemaSystem_GetClassInfoBinaryName + 1,
     kSchemaSystem_GetEnumBinaryName = kSchemaSystem_GetClassModuleName + 1,
     kSchemaSystem_GetEnumProjectName = kSchemaSystem_GetEnumBinaryName + 1,
+    #if defined(DEADLOCK)
+    kSchemaSystemTypeScope_DeclaredClass = 12,
+    #else
     kSchemaSystemTypeScope_DeclaredClass = 14,
+    #endif
     kSchemaSystemTypeScope_DeclaredEnum = kSchemaSystemTypeScope_DeclaredClass + 1,
     kSchemaSystemTypeScope_GetScopeName = 28,
     kSchemaSystemTypeScope_IsGlobalScope = kSchemaSystemTypeScope_GetScopeName + 1,
@@ -655,7 +659,7 @@ public:
     const char* m_pszName; // 0x0008
     const char* m_pszModule; // 0x0010
 
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
     std::array<std::byte, 8> pad_0x18;
 #endif
 
@@ -692,7 +696,13 @@ public:
     }
 };
 
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
+static_assert(offsetof(SchemaClassInfoData_t, m_nSizeOf) == 0x20);
+static_assert(offsetof(SchemaClassInfoData_t, m_nFieldSize) == 0x24);
+static_assert(offsetof(SchemaClassInfoData_t, m_nStaticMetadataSize) == 0x26);
+static_assert(offsetof(SchemaClassInfoData_t, m_unAlignOf) == 0x28);
+static_assert(offsetof(SchemaClassInfoData_t, m_nBaseClassSize) == 0x29);
+static_assert(offsetof(SchemaClassInfoData_t, m_pFields) == 0x30);
 static_assert(offsetof(SchemaClassInfoData_t, m_pFn) == 0x68);
 #else
 static_assert(offsetof(SchemaClassInfoData_t, m_pFn) == 0x60, "Offset of m_pFn should be 0x60");
@@ -979,13 +989,24 @@ private:
     CSchemaType_NoschemaType m_pNoschemaType = {};
 #endif
 
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
     std::array<char, 0x60> pad_0x500 = {};
 #endif
 
     CUtlTSHash<CSchemaClassBinding*> m_ClassBindings = {}; // 0x05C0
     CUtlTSHash<CSchemaEnumBinding*> m_EnumBindings = {}; // 0x2E50
+
+    friend struct CSchemaSystemTypeScopeLayout;
 };
+
+#if defined(DEADLOCK)
+// schemasystem.dll allocates 0x3640 bytes per type scope and indexes the two binding hashes at +0x560 and +0x1DD0.
+struct CSchemaSystemTypeScopeLayout {
+    static_assert(offsetof(CSchemaSystemTypeScope, m_ClassBindings) == 0x560);
+    static_assert(offsetof(CSchemaSystemTypeScope, m_EnumBindings) == 0x1DD0);
+    static_assert(sizeof(CSchemaSystemTypeScope) == 0x3640);
+};
+#endif
 
 enum SchemaTypeScope_t : std::uint8_t {
     SCHEMA_TYPESCOPE_GLOBAL = 0,
@@ -1107,6 +1128,11 @@ public:
         return sdk::GetInterface<CSchemaSystem>(loader::get_module_file_name("schemasystem").c_str(), "SchemaSystem_0");
     }
 };
+
+#if defined(DEADLOCK)
+// PrintSchemaStats reads the type scope vector at +0x190/+0x198 and the registration counters at +0x280..+0x290.
+static_assert(sizeof(CSchemaSystem) == 0x298);
+#endif
 
 // source2gen - Source2 games SDK generator
 // Copyright 2024 neverlosecc
