@@ -94,7 +94,7 @@ public:
 
     MemAllocAttribute_t m_AllocAttribute{};
 
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
     alignas(8) std::byte m_Mutex[0x10]{};
 #else
     CThreadMutex m_Mutex{};
@@ -104,7 +104,10 @@ public:
 
     int m_TotalSize{}; // m_BlocksPerBlob * (m_NumBlobs + 1) + (m_nAligment + 14)
 };
-#if defined(CS2)
+#if defined(CS2) || defined(DEADLOCK)
+// tier0's constructor and Init lock a CAtomicMutex at +0x38 and store the blob head at +0x48.
+static_assert(offsetof(CUtlMemoryPoolBaseV2, m_Mutex) == 0x38);
+static_assert(offsetof(CUtlMemoryPoolBaseV2, m_pBlobHead) == 0x48);
 static_assert(sizeof(CUtlMemoryPoolBaseV2) == 0x60);
 #else
 static_assert(sizeof(CUtlMemoryPoolBaseV2) == platform_specific{.windows = 0x80, .linux = 0x90});
